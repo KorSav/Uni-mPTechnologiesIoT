@@ -1,0 +1,85 @@
+#include <app.hpp>
+
+void initGpio()
+{
+    RCC->APB2ENR |= RCC_APB2ENR_IOPAEN | RCC_APB2ENR_IOPBEN | RCC_APB2ENR_AFIOEN;
+
+    AFIO->MAPR &= ~(AFIO_MAPR_TIM2_REMAP | AFIO_MAPR_TIM3_REMAP | AFIO_MAPR_USART1_REMAP);
+
+    GPIOA->CRL &= ~(GPIO_CRL_MODE0 | GPIO_CRL_CNF0);
+    GPIOA->CRL |= GPIO_CRL_MODE0_1 | GPIO_CRL_MODE0_0;
+    GPIOA->CRL |= GPIO_CRL_CNF0_1;
+
+    GPIOA->CRL &= ~(GPIO_CRL_MODE6 | GPIO_CRL_CNF6);
+    GPIOA->CRL |= GPIO_CRL_MODE6 | GPIO_CRL_CNF6_1;
+
+    GPIOA->CRL &= ~(GPIO_CRL_MODE1 | GPIO_CRL_CNF1);
+    GPIOA->CRL |= GPIO_CRL_MODE1 | GPIO_CRL_CNF1_1;
+
+    GPIOA->CRL &= ~(GPIO_CRL_MODE2 | GPIO_CRL_CNF2);
+    GPIOA->CRL &= ~(GPIO_CRL_MODE3 | GPIO_CRL_CNF3);
+
+    GPIOA->CRH &= ~(GPIO_CRH_MODE9 | GPIO_CRH_CNF9);
+    GPIOA->CRH |= GPIO_CRH_MODE9_1 | GPIO_CRH_MODE9_0;
+    GPIOA->CRH |= GPIO_CRH_CNF9_1;
+
+    GPIOA->CRH &= ~(GPIO_CRH_MODE10 | GPIO_CRH_CNF10);
+    GPIOA->CRH |= GPIO_CRH_CNF10_0;
+
+    GPIOB->CRL &= ~(GPIO_CRL_MODE0 | GPIO_CRL_CNF0);
+    GPIOB->CRL |= GPIO_CRL_CNF0_1;
+    GPIOB->ODR |= GPIO_ODR_ODR0;
+
+    GPIOB->CRL &= ~(GPIO_CRL_MODE1 | GPIO_CRL_CNF1);
+    GPIOB->CRL |= GPIO_CRL_CNF1_1;
+    GPIOB->ODR |= GPIO_ODR_ODR1;
+}
+
+void initTim2FanPwm(uint16_t psc, uint16_t arr)
+{
+    RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
+
+    TIM2->PSC = psc;
+    TIM2->ARR = arr;
+    TIM2->CCR2 = 0;
+    TIM2->CCMR1 &= ~(TIM_CCMR1_OC2M | TIM_CCMR1_CC2S);
+    TIM2->CCMR1 |= TIM_CCMR1_OC2M;
+    TIM2->CCMR1 |= TIM_CCMR1_OC2PE;
+    TIM2->CCER |= TIM_CCER_CC2E;
+    TIM2->CR1 |= TIM_CR1_ARPE;
+    TIM2->EGR |= TIM_EGR_UG;
+    TIM2->CR1 |= TIM_CR1_CEN;
+}
+
+void initTim3LedPwm(uint16_t psc, uint16_t arr)
+{
+    RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
+
+    TIM3->PSC = psc;
+    TIM3->ARR = arr;
+    TIM3->CCR1 = 0;
+    TIM3->CCMR1 &= ~(TIM_CCMR1_OC1M | TIM_CCMR1_CC1S);
+    TIM3->CCMR1 |= TIM_CCMR1_OC1M;
+    TIM3->CCMR1 |= TIM_CCMR1_OC1PE;
+    TIM3->CCER |= TIM_CCER_CC1E;
+    TIM3->CR1 |= TIM_CR1_ARPE;
+    TIM3->EGR |= TIM_EGR_UG;
+    TIM3->CR1 |= TIM_CR1_CEN;
+}
+
+void initSysTickTimebase()
+{
+    SysTick->LOAD = 7999U;
+    SysTick->VAL = 0U;
+    SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_TICKINT_Msk | SysTick_CTRL_ENABLE_Msk;
+}
+
+extern "C" void SysTick_Handler()
+{
+    ++g_ms;
+}
+
+uint32_t millis()
+{
+    return g_ms;
+}
